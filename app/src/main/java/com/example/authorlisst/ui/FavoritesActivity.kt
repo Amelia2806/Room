@@ -1,4 +1,4 @@
-package com.example.authorlist.ui
+package com.example.authorlisst.ui
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity

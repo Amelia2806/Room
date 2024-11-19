@@ -15,7 +15,7 @@ object ApiClient {
             .addInterceptor(mHttpLoggingInterceptor)
             .build()
         val builder = Retrofit.Builder()
-            .baseUrl("https://thetestrequest.com")
+            .baseUrl("https://rickandmortyapi.com/api/")
             .addConverterFactory(GsonConverterFactory.create())
             .client(mOkHttpClient)
             .build()

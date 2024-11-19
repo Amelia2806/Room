@@ -60,11 +60,8 @@ class ApiAdapter(
                 favoriteIcon.setOnClickListener {
                     // Mengubah status favorit dan memanggil callback untuk update
                     apiData.isFavorite = !apiData.isFavorite
-                    onFavoriteClicked(apiData)
-                    updateFavoriteIcon(apiData)
-
-                    // Simpan perubahan ke database menggunakan Coroutine
-                    saveFavoriteToDatabase(apiData)
+                    onFavoriteClicked(apiData) // Panggil callback untuk memperbarui data di MainActivity
+                    updateFavoriteIcon(apiData) // Update ikon favorit
                 }
             }
         }
@@ -75,26 +72,6 @@ class ApiAdapter(
                 if (apiData.isFavorite) R.drawable.baseline_favorite_24
                 else R.drawable.baseline_favorite_border_24
             )
-        }
-
-        private fun saveFavoriteToDatabase(apiData: ApiData) {
-            // Menyimpan atau menghapus favorit dari database dalam Coroutine
-            CoroutineScope(Dispatchers.IO).launch {
-                if (apiData.isFavorite) {
-                    favoriteDao.insert(
-                        Favorite(
-                            id = apiData.id,
-                            name = apiData.name,
-                            status = apiData.status,
-                            species = apiData.species,
-                            gender = apiData.gender,
-                            isFavorite = true
-                        )
-                    )
-                } else {
-                    favoriteDao.removeFromFavorites(apiData.id.toLong())
-                }
-            }
         }
     }
 }

@@ -1,7 +1,8 @@
-package com.example.authorlist.ui
+package com.example.authorlisst.ui
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -48,12 +49,15 @@ class MainActivity : AppCompatActivity() {
         val call = ApiClient.getInstance().getCharacters()
         call.enqueue(object : Callback<ApiData> {
             override fun onResponse(call: Call<ApiData>, response: Response<ApiData>) {
+                Log.d("response", response.toString())
                 if (response.isSuccessful) {
                     val apiCharacters = response.body()?.results ?: emptyList()
 
                     lifecycleScope.launch(Dispatchers.IO) {
+                        // Mengatur nilai isFavorite ke false secara default
                         val favoriteMap = favoriteDao.getFavoriteCharacters().associateBy { it.id }
                         val characters = apiCharacters.map { character ->
+                            // Set isFavorite ke false terlebih dahulu
                             character.isFavorite = favoriteMap[character.id]?.isFavorite ?: false
                             character
                         }
@@ -74,17 +78,29 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun toggleFavorite(apiData: ApiData) {
+        // Membalikkan status isFavorite
         apiData.isFavorite = !apiData.isFavorite
+
+        // Debug log untuk memeriksa nilai apiData sebelum menyimpan ke database
+        Log.d("ToggleFavorite", "apiData: ${apiData.toString()}")
 
         lifecycleScope.launch(Dispatchers.IO) {
             if (apiData.isFavorite) {
+                // Menambahkan ke favorit
                 favoriteDao.insert(Favorite(apiData.id, apiData.name, apiData.status, apiData.species, apiData.gender, true))
             } else {
+                // Menghapus dari favorit
                 favoriteDao.removeFromFavorites(apiData.id.toLong())
             }
 
             withContext(Dispatchers.Main) {
+                // Memberikan log untuk memverifikasi setelah penyimpanan
+                Log.d("ToggleFavorite", "Updated apiData: ${apiData.toString()}")
+
+                // Memberi tahu perubahan
                 apiAdapter.notifyDataSetChanged()
+
+                // Tampilkan toast sesuai status favorit
                 Toast.makeText(this@MainActivity, if (apiData.isFavorite) "Added to favorites" else "Removed from favorites", Toast.LENGTH_SHORT).show()
             }
         }
