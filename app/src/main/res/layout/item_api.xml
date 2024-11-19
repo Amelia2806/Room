@@ -3,35 +3,39 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:paddingHorizontal="16dp"
+    android:background="@color/primary">
 
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:backgroundTint="@color/white"
         app:cardCornerRadius="10dp"
         android:layout_marginVertical="8dp"
-        app:cardElevation="0dp" >
+        app:cardElevation="4dp">
 
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:padding="15dp" >
+            android:layout_height="wrap_content"
+            android:padding="16dp">
 
+            <!-- Image Section -->
             <androidx.cardview.widget.CardView
                 android:id="@+id/cv_img"
                 android:layout_width="140dp"
                 android:layout_height="140dp"
-                app:cardCornerRadius="5dp">
+                app:cardCornerRadius="8dp"
+                app:cardElevation="2dp">
 
                 <ImageView
                     android:id="@+id/img_char"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
                     android:background="@color/pink" />
-
             </androidx.cardview.widget.CardView>
 
+            <!-- Name -->
             <TextView
                 android:id="@+id/tv_char_name"
                 android:layout_width="wrap_content"
@@ -43,6 +47,7 @@
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
+            <!-- Gender -->
             <TextView
                 android:id="@+id/tv_char_gender"
                 android:layout_width="wrap_content"
@@ -55,6 +60,7 @@
                 android:textColor="@color/black"
                 android:textSize="14sp" />
 
+            <!-- Status -->
             <TextView
                 android:id="@+id/tv_char_status"
                 android:layout_width="wrap_content"
@@ -63,10 +69,11 @@
                 android:layout_toEndOf="@id/cv_img"
                 android:layout_marginStart="16dp"
                 android:layout_marginTop="4dp"
-                android:text="Gender"
+                android:text="Status"
                 android:textColor="@color/black"
                 android:textSize="14sp" />
 
+            <!-- Species -->
             <TextView
                 android:id="@+id/tv_char_species"
                 android:layout_width="wrap_content"
@@ -75,10 +82,22 @@
                 android:layout_toEndOf="@id/cv_img"
                 android:layout_marginStart="16dp"
                 android:layout_marginTop="4dp"
-                android:text="Gender"
+                android:text="Species"
                 android:textColor="@color/black"
                 android:textSize="14sp" />
-            
+
+            <!-- Favorite Icon -->
+            <Button
+                android:id="@+id/btnFavorites"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_alignParentEnd="true"
+                android:layout_marginEnd="16dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/baseline_favorite_border_24"
+                android:clickable="true"
+                android:focusable="true"
+                android:contentDescription="Favorite Icon" />
 
         </RelativeLayout>
 

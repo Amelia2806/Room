@@ -24,4 +24,5 @@
         android:layout_gravity="bottom"
         android:background="@color/primary"
         app:menu="@menu/buttom_navigation_menu" />
+
 </LinearLayout>

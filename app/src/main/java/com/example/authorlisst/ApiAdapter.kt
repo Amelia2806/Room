@@ -1,17 +1,21 @@
-package com.example.authorlisst
+package com.example.authorlist.adapter
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import android.widget.ImageView
-import android.widget.TextView
-import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
-import com.squareup.picasso.Picasso
-import com.example.authorlisst.model.ApiData
-import com.example.authorlisst.R
 import com.example.authorlisst.databinding.ItemApiBinding
+import com.example.authorlist.database.Favorite
+import com.example.authorlist.database.FavoriteDao
+import com.example.authorlist.model.ApiData
+import com.squareup.picasso.Picasso
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
-class ApiAdapter(private var apiList: List<ApiData>) : RecyclerView.Adapter<ApiAdapter.ApiViewHolder>() {
+class ApiAdapter(
+    private val apiList: MutableList<ApiData>,
+    private val favoriteDao: FavoriteDao
+) : RecyclerView.Adapter<ApiAdapter.ApiViewHolder>() {
 
     inner class ApiViewHolder(val binding: ItemApiBinding) : RecyclerView.ViewHolder(binding.root)
 
@@ -22,27 +26,71 @@ class ApiAdapter(private var apiList: List<ApiData>) : RecyclerView.Adapter<ApiA
 
     override fun onBindViewHolder(holder: ApiViewHolder, position: Int) {
         val apiData = apiList[position]
-        holder.binding.tvCharName.text = apiData.name
-        holder.binding.tvCharStatus.text = apiData.status
-        holder.binding.tvCharSpecies.text = apiData.species
-        holder.binding.tvCharGender.text = apiData.gender
+        holder.binding.apply {
+            tvCharName.text = apiData.name
+            tvCharStatus.text = apiData.status
+            tvCharSpecies.text = apiData.species
+            tvCharGender.text = apiData.gender
 
-        Picasso.get()
-            .load("https://rickandmortyapi.com/api/character/avatar/${apiData.id}.jpeg")
-            .into(holder.binding.imgChar)
+            Picasso.get()
+                .load("https://rickandmortyapi.com/api/character/avatar/${apiData.id}.jpeg")
+                .into(imgChar)
 
-        holder.itemView.setOnClickListener {
-            Toast.makeText(holder.itemView.context, "${apiData.name}", Toast.LENGTH_SHORT).show()
+            btnFavorites.text =
+                if (apiData.isFavorite) "Remove from Favorites" else "Add to Favorites"
+
+            btnFavorites.setOnClickListener {
+                apiData.isFavorite = !apiData.isFavorite
+                btnFavorites.text =
+                    if (apiData.isFavorite) "Remove from Favorites" else "Add to Favorites"
+
+                CoroutineScope(Dispatchers.IO).launch {
+                    if (apiData.isFavorite) {
+                        favoriteDao.insertFavorite(
+                            Favorite(
+                                id = apiData.id.toLong(),
+                                name = apiData.name,
+                                status = apiData.status,
+                                species = apiData.species,
+                                gender = apiData.gender,
+                                isFavorite = true
+                            )
+                        )
+                    } else {
+                        favoriteDao.deleteById(apiData.id.toLong())
+                    }
+                }
+            }
         }
     }
 
-    override fun getItemCount(): Int {
-        return apiList.size
-    }
+    override fun getItemCount(): Int = apiList.size
 
-    // Fungsi untuk memperbarui data adapter
-    fun updateApiData(newApiData: List<ApiData>) {
-        apiList = newApiData
+    fun updateApiData(newApiData: List<Any>?) {
+        apiList.clear()
+
+        newApiData?.let {
+            for (item in it) {
+                when (item) {
+                    is ApiData -> {
+                        apiList.add(item)
+                    }
+                    is Favorite -> {
+                        apiList.add(
+                            ApiData(
+                                id = item.id.toInt(),
+                                name = item.name,
+                                status = item.status,
+                                species = item.species,
+                                gender = item.gender,
+                                isFavorite = true // Mark as favorite
+                            )
+                        )
+                    }
+                }
+            }
+        }
+
         notifyDataSetChanged()
     }
 }

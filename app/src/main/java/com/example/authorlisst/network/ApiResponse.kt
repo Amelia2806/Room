@@ -1,9 +1,7 @@
-package com.example.authorlisst.network
+package com.example.authorlist.network
 
-import com.example.authorlisst.model.ApiData
-import com.google.gson.annotations.SerializedName
+import com.example.authorlist.model.ApiData
 
 data class ApiResponse(
-    @SerializedName("results")
     val results: List<ApiData>
 )

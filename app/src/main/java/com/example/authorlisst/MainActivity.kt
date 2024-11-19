@@ -1,75 +1,104 @@
 package com.example.authorlisst
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.authorlisst.databinding.ActivityMainBinding
-import com.example.authorlisst.model.ApiData
-import com.example.authorlisst.network.ApiClient
-import com.example.authorlisst.network.ApiResponse
+import com.example.authorlist.adapter.ApiAdapter
+import com.example.authorlist.database.FavoriteDao
+import com.example.authorlist.database.FavoriteRoomDatabase
+import com.example.authorlist.network.ApiClient
+import com.example.authorlist.network.ApiResponse
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
 class MainActivity : AppCompatActivity() {
-
-    // View Binding
-    private val binding by lazy {
-        ActivityMainBinding.inflate(layoutInflater)
-    }
-
-    // Inisialisasi API Client dan Adapter
-    private val client = ApiClient.getInstance()
+    private lateinit var binding: ActivityMainBinding
     private lateinit var adapter: ApiAdapter
+    private lateinit var favoriteDao: FavoriteDao
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // Set content view
+        binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Enable edge-to-edge UI (setelah setContentView)
-        enableEdgeToEdge()
+        // Initialize favoriteDao to access the Room database
+        favoriteDao = FavoriteRoomDatabase.getInstance(this).favoriteDao()
 
-        // Apply padding for system bars (status bar, navigation bar)
-        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
+        // Initialize adapter for RecyclerView
+        adapter = ApiAdapter(mutableListOf(), favoriteDao)
 
-        // Set up RecyclerView and Adapter
-        binding.rvMorty.layoutManager = LinearLayoutManager(this) // Pastikan LayoutManager sudah benar
-        adapter = ApiAdapter(listOf()) // Adapter dimulai dengan daftar kosong
+        // Setup RecyclerView
+        binding.rvMorty.layoutManager = LinearLayoutManager(this)
         binding.rvMorty.adapter = adapter
 
-        // Fetch data dari API
+        // Fetch data from API and database (favorites)
         fetchData()
+        fetchFavorites()
     }
 
+    // Fetch character data from API
     private fun fetchData() {
-        // Memanggil API untuk mengambil data
-        val response = client.getApiData()
-        response.enqueue(object : Callback<ApiResponse> {
+        val apiClient = ApiClient.apiService
+        val call = apiClient.getCharacters()
+
+        call.enqueue(object : Callback<ApiResponse> {
             override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
-                // Memastikan response berhasil dan body tidak null
-                val characterList = response.body()?.results
-                if (characterList != null && characterList.isNotEmpty()) {
-                    // Update data pada adapter
-                    adapter.updateApiData(characterList)
+                if (response.isSuccessful) {
+                    val characterList = response.body()?.results
+                    if (!characterList.isNullOrEmpty()) {
+                        adapter.updateApiData(characterList)
+                    } else {
+                        Toast.makeText(this@MainActivity, "No data found", Toast.LENGTH_SHORT).show()
+                    }
                 } else {
-                    Toast.makeText(this@MainActivity, "Tidak ada data yang tersedia", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@MainActivity, "Failed to fetch data: ${response.message()}", Toast.LENGTH_SHORT).show()
                 }
             }
 
             override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
-                // Menampilkan error jika gagal fetch data
-                Toast.makeText(this@MainActivity, "Koneksi Error: ${t.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@MainActivity, "Connection error: ${t.localizedMessage}", Toast.LENGTH_SHORT).show()
             }
         })
+    }
+
+    // Fetch favorite data from Room and update RecyclerView
+    private fun fetchFavorites() {
+        // Run Room query in background thread
+        CoroutineScope(Dispatchers.IO).launch {
+            val favoriteList = favoriteDao.getAllFavorites()
+
+            // Update UI on main thread after fetching data from database
+            withContext(Dispatchers.Main) {
+                if (favoriteList.isNotEmpty()) {
+                    adapter.updateApiData(favoriteList)
+                } else {
+                    Toast.makeText(this@MainActivity, "No favorites found", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    override fun onCreateOptionsMenu(menu: android.view.Menu?): Boolean {
+        menuInflater.inflate(R.menu.buttom_navigation_menu, menu) // Make sure menu file name is correct
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: android.view.MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.btnFavorites -> {
+                val intent = Intent(this, FavoritesActivity::class.java)
+                startActivity(intent)
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
     }
 }

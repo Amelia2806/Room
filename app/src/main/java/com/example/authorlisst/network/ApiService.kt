@@ -1,12 +1,9 @@
-package com.example.authorlisst.network
+package com.example.authorlist.network
 
-import com.example.authorlisst.model.ApiData
 import retrofit2.Call
-
 import retrofit2.http.GET
 
 interface ApiService {
-
     @GET("character")
-    fun getApiData(): Call<ApiResponse>
+    fun getCharacters(): Call<ApiResponse>
 }
