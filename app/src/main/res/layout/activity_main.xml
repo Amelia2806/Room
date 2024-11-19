@@ -6,23 +6,23 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/primary"
-    tools:context=".MainActivity">
+    android:background="@color/primary">
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rv_morty"
+        android:id="@+id/recyclerView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="6"
-        android:padding="8dp"
         tools:listitem="@layout/item_api"/>
 
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/bottom_navigation_view"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:background="@color/primary"
-        app:menu="@menu/buttom_navigation_menu" />
+    <ImageButton
+        android:id="@+id/favoriteIconButton"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_gravity="center"
+        android:src="@drawable/baseline_favorite_border_24"
+        android:background="@android:color/transparent"
+        android:contentDescription="Add to favorites"
+        tools:ignore="TouchTargetSizeCheck" />
 
 </LinearLayout>

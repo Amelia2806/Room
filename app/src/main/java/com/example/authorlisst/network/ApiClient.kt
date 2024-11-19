@@ -1,16 +1,24 @@
-package com.example.authorlist.network
+package com.example.authorlisst.network
 
+import com.example.authorlist.network.ApiService
+import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object ApiClient {
-    private const val BASE_URL = "https://rickandmortyapi.com/api/"
-
-    val apiService: ApiService by lazy {
-        Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
+    fun getInstance(): ApiService {
+        val mHttpLoggingInterceptor = HttpLoggingInterceptor()
+            .setLevel(HttpLoggingInterceptor.Level.BODY)
+        val mOkHttpClient = OkHttpClient
+            .Builder()
+            .addInterceptor(mHttpLoggingInterceptor)
             .build()
-            .create(ApiService::class.java)
+        val builder = Retrofit.Builder()
+            .baseUrl("https://thetestrequest.com")
+            .addConverterFactory(GsonConverterFactory.create())
+            .client(mOkHttpClient)
+            .build()
+        return builder.create(ApiService::class.java)
     }
 }

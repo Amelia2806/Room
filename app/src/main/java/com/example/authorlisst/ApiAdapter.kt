@@ -3,6 +3,7 @@ package com.example.authorlist.adapter
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import com.example.authorlisst.R
 import com.example.authorlisst.databinding.ItemApiBinding
 import com.example.authorlist.database.Favorite
 import com.example.authorlist.database.FavoriteDao
@@ -13,11 +14,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class ApiAdapter(
-    private val apiList: MutableList<ApiData>,
-    private val favoriteDao: FavoriteDao
+    private var apiList: List<ApiData>,
+    private val favoriteDao: FavoriteDao,
+    private val onFavoriteClicked: (ApiData) -> Unit
 ) : RecyclerView.Adapter<ApiAdapter.ApiViewHolder>() {
 
-    inner class ApiViewHolder(val binding: ItemApiBinding) : RecyclerView.ViewHolder(binding.root)
+    // Fungsi untuk memperbarui data yang diterima
+    fun updateData(newApiData: List<ApiData>) {
+        apiList = newApiData
+        notifyDataSetChanged()
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ApiViewHolder {
         val binding = ItemApiBinding.inflate(LayoutInflater.from(parent.context), parent, false)
@@ -26,71 +32,69 @@ class ApiAdapter(
 
     override fun onBindViewHolder(holder: ApiViewHolder, position: Int) {
         val apiData = apiList[position]
-        holder.binding.apply {
-            tvCharName.text = apiData.name
-            tvCharStatus.text = apiData.status
-            tvCharSpecies.text = apiData.species
-            tvCharGender.text = apiData.gender
-
-            Picasso.get()
-                .load("https://rickandmortyapi.com/api/character/avatar/${apiData.id}.jpeg")
-                .into(imgChar)
-
-            btnFavorites.text =
-                if (apiData.isFavorite) "Remove from Favorites" else "Add to Favorites"
-
-            btnFavorites.setOnClickListener {
-                apiData.isFavorite = !apiData.isFavorite
-                btnFavorites.text =
-                    if (apiData.isFavorite) "Remove from Favorites" else "Add to Favorites"
-
-                CoroutineScope(Dispatchers.IO).launch {
-                    if (apiData.isFavorite) {
-                        favoriteDao.insertFavorite(
-                            Favorite(
-                                id = apiData.id.toLong(),
-                                name = apiData.name,
-                                status = apiData.status,
-                                species = apiData.species,
-                                gender = apiData.gender,
-                                isFavorite = true
-                            )
-                        )
-                    } else {
-                        favoriteDao.deleteById(apiData.id.toLong())
-                    }
-                }
-            }
-        }
+        holder.bind(apiData)
     }
 
     override fun getItemCount(): Int = apiList.size
 
-    fun updateApiData(newApiData: List<Any>?) {
-        apiList.clear()
+    inner class ApiViewHolder(private val binding: ItemApiBinding) :
+        RecyclerView.ViewHolder(binding.root) {
 
-        newApiData?.let {
-            for (item in it) {
-                when (item) {
-                    is ApiData -> {
-                        apiList.add(item)
-                    }
-                    is Favorite -> {
-                        apiList.add(
-                            ApiData(
-                                id = item.id.toInt(),
-                                name = item.name,
-                                status = item.status,
-                                species = item.species,
-                                gender = item.gender,
-                                isFavorite = true // Mark as favorite
-                            )
-                        )
-                    }
+        fun bind(apiData: ApiData) {
+            binding.apply {
+                // Mengatur teks untuk item
+                tvCharName.text = apiData.name
+                tvCharStatus.text = apiData.status
+                tvCharSpecies.text = apiData.species
+                tvCharGender.text = apiData.gender
+
+                // Menggunakan Picasso untuk memuat gambar
+                Picasso.get()
+                    .load("https://rickandmortyapi.com/api/character/avatar/${apiData.id}.jpeg")
+                    .into(imgChar)
+
+                // Mengatur ikon tombol favorit berdasarkan status isFavorite
+                updateFavoriteIcon(apiData)
+
+                // Menangani klik pada tombol favorit
+                favoriteIcon.setOnClickListener {
+                    // Mengubah status favorit dan memanggil callback untuk update
+                    apiData.isFavorite = !apiData.isFavorite
+                    onFavoriteClicked(apiData)
+                    updateFavoriteIcon(apiData)
+
+                    // Simpan perubahan ke database menggunakan Coroutine
+                    saveFavoriteToDatabase(apiData)
                 }
             }
         }
 
-        notifyDataSetChanged()
+        private fun updateFavoriteIcon(apiData: ApiData) {
+            // Mengupdate ikon favorit berdasarkan status isFavorite
+            binding.favoriteIcon.setImageResource(
+                if (apiData.isFavorite) R.drawable.baseline_favorite_24
+                else R.drawable.baseline_favorite_border_24
+            )
+        }
+
+        private fun saveFavoriteToDatabase(apiData: ApiData) {
+            // Menyimpan atau menghapus favorit dari database dalam Coroutine
+            CoroutineScope(Dispatchers.IO).launch {
+                if (apiData.isFavorite) {
+                    favoriteDao.insert(
+                        Favorite(
+                            id = apiData.id,
+                            name = apiData.name,
+                            status = apiData.status,
+                            species = apiData.species,
+                            gender = apiData.gender,
+                            isFavorite = true
+                        )
+                    )
+                } else {
+                    favoriteDao.removeFromFavorites(apiData.id.toLong())
+                }
+            }
+        }
     }
 }
